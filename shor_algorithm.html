@@ -281,6 +281,18 @@
       <label>&nbsp;</label>
       <button id="resetBtn">Reset</button>
     </div>
+    <div class="control-item" style="grid-column: span 1;">
+      <label>&nbsp;</label>
+      <button id="autoplayBtn">Auto Play: Off</button>
+    </div>
+    <div class="control-item" style="grid-column: span 1;">
+      <label for="speedSelect">Speed</label>
+      <select id="speedSelect">
+        <option value="slow">slow</option>
+        <option value="normal" selected>normal</option>
+        <option value="fast">fast</option>
+      </select>
+    </div>
   </div>
   <div id="validationMessage"></div>
 </div>
@@ -345,13 +357,6 @@
   <button id="prevStepBtn">◀ Prev</button>
   <button id="nextStepBtn">Next ▶</button>
   <button id="classroomBtn">Classroom Mode: Off</button>
-  <button id="autoplayBtn">Auto Play: Off</button>
-  <label for="speedSelect" style="font-size:clamp(18px,1.5vw,22px); font-weight:700; align-self:center;">Speed</label>
-  <select id="speedSelect">
-    <option value="slow">slow</option>
-    <option value="normal" selected>normal</option>
-    <option value="fast">fast</option>
-  </select>
   <button id="fullscreenBtn">Fullscreen</button>
   <div class="pill" id="stepStatus">Section 1 / 7</div>
 </div>
