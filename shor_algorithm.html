@@ -396,7 +396,7 @@
     .pc-3 .pc-val { color: var(--amber); }
     .pc-4 .pc-val { color: var(--red); }
 
-    /* ── QFT PEAKS ── */
+    /* ── IQFT PEAKS ── */
     .qft-axis {
       position: relative;
       height: 160px;
@@ -629,7 +629,7 @@
     "Now we apply Hadamard gates to put ALL 2048 states into superposition simultaneously.",
     "We pick a random base x=8 and compute 8^j mod 15 for every j — all at once, quantumly.",
     "Measuring the second register collapses it, revealing a hidden repeating structure — the period r.",
-    "The Quantum Fourier Transform converts that repeating pattern into sharp frequency peaks.",
+    "The inverse Quantum Fourier Transform (IQFT) converts that repeating pattern into sharp frequency peaks.",
     "We measure the control register. The result encodes a fraction with r in the denominator.",
     "Classical continued fractions extracts the period r=4 from the measured phase.",
     "With r=4, a simple GCD calculation gives us the factors — 15 = 3 × 5. Done!",
@@ -721,23 +721,23 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
 
     {
       num: "Step 4",
-      title: "Quantum Fourier Transform",
+      title: "Inverse Quantum Fourier Transform",
       render(el) {
         el.innerHTML = `
-        <div class="step-body">The QFT converts periodicity into frequency. Phases interfere constructively
+        <div class="step-body">The inverse QFT (IQFT) converts periodicity into frequency. Phases interfere constructively
 only at multiples of M/r = 2048/4 = 512.</div>
-        <div class="formula">QFT : 1/√r ∑ₖ e^{2πi·k/r} |k·M/r⟩
+        <div class="formula">IQFT : 1/√r ∑ₖ e^{2πi·k/r} |k·M/r⟩
 
 constructive peaks at k = 0, 512, 1024, 1536</div>
         <div class="step-body" style="margin:14px 0 6px;">Interference pattern (phase sums across r=4 components):</div>
         <canvas id="waveCanvas" width="800" height="140" style="width:100%; height:140px;"></canvas>
-        <div class="step-body" style="margin:14px 0 6px;">Frequency-domain peaks after QFT:</div>
+        <div class="step-body" style="margin:14px 0 6px;">Frequency-domain peaks after inverse QFT:</div>
         <div class="qft-axis" id="qftAxis">
           <div class="qft-baseline"></div>
         </div>`;
 
         drawWave(el.querySelector('#waveCanvas'));
-        setTimeout(() => drawQFTPeaks(el.querySelector('#qftAxis')), 300);
+        setTimeout(() => drawIQFTPeaks(el.querySelector('#qftAxis')), 300);
       }
     },
 
@@ -838,7 +838,7 @@ Verify: 8⁴ mod 15 = 4096 mod 15 = <strong>1</strong> ✓</div>`;
     });
   }
 
-  function drawQFTPeaks(container) {
+  function drawIQFTPeaks(container) {
     if (!container) return;
     const peaks = [0, 512, 1024, 1536];
     const labels = ['0', '512', '1024', '1536'];
