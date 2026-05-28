@@ -8,22 +8,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0d14;
-      --bg2: #0f1420;
-      --bg3: #141928;
-      --border: rgba(30,95,212,0.15);
-      --border-bright: rgba(30,95,212,0.40);
-      --cyan: #1a5fd4;
-      --cyan-bright: #3d8bff;
-      --cyan-dim: rgba(26,95,212,0.10);
-      --green: #00c97a;
-      --green-dim: rgba(0,201,122,0.10);
-      --amber: #f5a623;
-      --amber-dim: rgba(245,166,35,0.10);
-      --red: #ff4e4e;
-      --text: #e8edf5;
-      --text-dim: #a0aec0;
-      --text-muted: #4a5568;
+      --bg: #ffffff;
+      --bg2: #f8fafc;
+      --bg3: #f1f5f9;
+      --border: rgba(30,95,212,0.20);
+      --border-bright: rgba(30,95,212,0.35);
+      --cyan: #0052cc;
+      --cyan-bright: #0052cc;
+      --cyan-dim: rgba(0,82,204,0.08);
+      --green: #00a854;
+      --green-dim: rgba(0,168,84,0.10);
+      --amber: #d97706;
+      --amber-dim: rgba(217,119,6,0.10);
+      --red: #dc2626;
+      --text: #1a202c;
+      --text-dim: #4a5568;
+      --text-muted: #9ca3af;
       --mono: 'Space Mono', monospace;
       --display: 'Syne', sans-serif;
     }
@@ -46,8 +46,8 @@
       position: fixed;
       inset: 0;
       background-image:
-              linear-gradient(rgba(61,139,255,0.04) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(61,139,255,0.04) 1px, transparent 1px);
+              linear-gradient(rgba(0,82,204,0.06) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0,82,204,0.06) 1px, transparent 1px);
       background-size: 60px 60px;
       pointer-events: none;
       z-index: 0;
@@ -58,7 +58,7 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 200;
-      background: rgba(10,13,20,0.97);
+      background: rgba(240,244,249,0.97);
       border-bottom: 2px solid var(--cyan);
       padding: 14px 40px;
       display: flex;
@@ -83,7 +83,7 @@
       font-family: var(--display);
       font-size: 26px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       letter-spacing: -0.3px;
       line-height: 1.3;
       flex: 1;
@@ -103,7 +103,7 @@
       position: fixed;
       top: 72px; left: 0; right: 0;
       height: 4px;
-      background: rgba(61,139,255,0.1);
+      background: rgba(0,82,204,0.1);
       z-index: 199;
     }
 
@@ -111,7 +111,7 @@
       height: 100%;
       background: linear-gradient(90deg, var(--cyan), var(--cyan-bright));
       transition: width 0.5s ease;
-      box-shadow: 0 0 12px rgba(61,139,255,0.6);
+      box-shadow: 0 0 12px rgba(0,82,204,0.4);
     }
 
     /* ── TIMER BAR ── */
@@ -181,7 +181,7 @@
       color: var(--cyan-bright);
       letter-spacing: 1px;
       margin-top: 4px;
-      box-shadow: 0 0 20px rgba(61,139,255,0.2);
+      box-shadow: 0 0 20px rgba(0,82,204,0.15);
     }
 
     /* ── STEP CARDS ── */
@@ -213,8 +213,8 @@
 
     /* Focus mode: dim past steps */
     .step-card.past {
-      opacity: 0.3;
-      filter: blur(0.5px);
+      opacity: 0.4;
+      filter: none;
     }
 
     .step-card.active {
@@ -418,7 +418,7 @@
       transform-origin: bottom;
       transform: scaleY(0);
       transition: transform 0.7s cubic-bezier(0.23,1,0.32,1);
-      box-shadow: 0 0 10px rgba(61,139,255,0.5);
+      box-shadow: 0 0 10px rgba(0,82,204,0.4);
     }
 
     .qft-peak-label {
@@ -508,12 +508,12 @@
       display: flex;
       gap: 12px;
       align-items: center;
-      background: rgba(10,13,20,0.95);
+      background: rgba(255,255,255,0.95);
       border: 1px solid var(--border-bright);
       border-radius: 50px;
       padding: 10px 24px;
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
     }
 
     .ctrl-btn {
@@ -654,38 +654,20 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
         </div>`;
       }
     },
-
-    {
-      num: "Step 1",
-      title: "Hadamard superposition",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">We apply a Hadamard gate to each qubit in the control register,
-putting all M = 2048 basis states into an equal superposition.</div>
-        <div class="formula">|0⟩⊗ᴷ  →  H⊗ᴷ  →  1/√M ∑ |j⟩   for j = 0 … M−1</div>
-        <div class="step-body" style="color:var(--text-muted); font-size:16px; margin-bottom:12px;">Showing 16 representative states (sampled from 2048):</div>
-        <div class="hstates" id="hstates"></div>`;
-
-        const cont = el.querySelector('#hstates');
-        const vis = 16;
-        const stepSz = Math.floor(M / vis);
-        let i = 0;
-
-        function tick() {
-          if (i >= vis) return;
-          const idx = i * stepSz;
-          const span = document.createElement('span');
-          span.className = 'hstate';
-          span.style.animationDelay = (i * 60) + 'ms';
-          const bin = idx.toString(2).padStart(K, '0');
-          span.textContent = `|${bin}⟩`;
-          cont.appendChild(span);
-          i++;
-          setTimeout(tick, 70);
-        }
-        setTimeout(tick, 100);
-      }
-    },
+          {
+            num: "Step 1",
+            title: "Hadamard superposition",
+            render(el) {
+              el.innerHTML = `
+              <div class="step-body">We apply a Hadamard gate to each qubit in the control register,
+          putting all M = 2048 basis states into an equal superposition.</div>
+              <div class="formula">|0⟩⊗ᴷ  →  H⊗ᴷ  →  1/√M ∑ |j⟩   for j = 0 … M−1</div>
+              <div class="step-body" style="margin:14px 0 6px;">The resulting superposition state:</div>
+              <div class="formula" style="font-size:18px; line-height:2.4; overflow-x:auto; word-break: break-word;">
+          1/√2048 (|00000000000⟩ + |00000000001⟩ + |00000000010⟩ + |00000000011⟩ + |00000000100⟩ + |00000000101⟩ + |00000000110⟩ + |00000000111⟩ + … + |11111111100⟩ + |11111111101⟩+ |11111111110⟩ + |11111111111⟩) = 1/√2048 (|0⟩ + |1⟩ + |2⟩ + |3⟩ + |4⟩ + |5⟩ + |6⟩ + |7⟩ + … + |2044⟩ + |2045⟩ + |2046⟩ + |2047⟩)
+              </div>`;
+            }
+          },
 
     {
       num: "Step 2",
@@ -697,7 +679,7 @@ putting all M = 2048 basis states into an equal superposition.</div>
         <div class="step-body">The first terms unroll as:</div>
         <div class="formula">|0⟩|1⟩ + |1⟩|8⟩ + |2⟩|4⟩ + |3⟩|2⟩
 |4⟩|1⟩ + |5⟩|8⟩ + |6⟩|4⟩ + |7⟩|2⟩
-|8⟩|1⟩ + |9⟩|8⟩ + |10⟩|4⟩ + |11⟩|2⟩
+|8⟩|1⟩ + |9⟩|8⟩ + |10⟩|4⟩ + |11⟩|2⟩ + ... + |2046⟩|1⟩ + |2045⟩|8⟩ +|2046⟩|4⟩ +|2047⟩|2⟩
    ⋮       (pattern repeats every 4 steps)</div>`;
       }
     },
@@ -711,10 +693,15 @@ putting all M = 2048 basis states into an equal superposition.</div>
 
         el.innerHTML = `
         <div class="step-body">Grouping by the target register value reveals a repeating pattern — the period <em>r</em>.</div>
-        <div class="formula">(|0⟩ + |4⟩ + |8⟩ + …)|1⟩  ← period group A
-(|1⟩ + |5⟩ + |9⟩ + …)|8⟩  ← period group B
-(|2⟩ + |6⟩ + |10⟩ + …)|4⟩ ← period group C
-(|3⟩ + |7⟩ + |11⟩ + …)|2⟩ ← period group D</div>
+        <div class="formula">
+    (|0⟩ + |4⟩ + |8⟩ + …)|1⟩  ← period group A
+    <br>
+    (|1⟩ + |5⟩ + |9⟩ + …)|8⟩  ← period group B
+    <br>
+    (|2⟩ + |6⟩ + |10⟩ + …)|4⟩ ← period group C
+    <br>
+    (|3⟩ + |7⟩ + |11⟩ + …)|2⟩ ← period group D
+        </div>
         <div class="step-body" style="margin-bottom:12px;">Sequence of 8ʲ mod 15:</div>
         <div class="period-row">
           ${seq.map((v,i) => `
@@ -777,31 +764,39 @@ Denominator → candidate period: <em>r = 4</em>
 Verify: 8⁴ mod 15 = 4096 mod 15 = <strong>1</strong> ✓</div>`;
       }
     },
-
     {
       num: "Step 7",
       title: "Factorization",
       render(el) {
         el.innerHTML = `
-        <div class="step-body">With period r = 4, we exploit the algebraic identity:</div>
-        <div class="formula">xʳ ≡ 1 (mod N)
+        <div class="step-body">With period r = 4, we exploit the algebraic identity to find factors of N = 15:</div>
 
-⇒  xʳ − 1 ≡ 0 (mod N)
+        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 1: Use the period identity</div>
+        <div class="formula">xʳ (mod N) ≡ 1
+    ⇒  xʳ − 1 (mod N) ≡ 0
+    ⇒  (x^{r/2} − 1)(x^{r/2} + 1) (mod N) ≡ 0 </div>
 
-⇒  (x^{r/2} − 1)(x^{r/2} + 1) ≡ 0 (mod N)</div>
-        <div class="step-body">Plugging in x = 8, r = 4:</div>
-        <div class="formula">x^{r/2} = 8² = 64
+        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 2: Substitute x = 8, r = 4</div>
+        <div class="formula">r/2 = 4/2 = 2
+    x^{r/2} = 8² = 64
+    <br>
+    (64 − 1)(64 + 1) (mod 15) ≡ 0
+    <br>
+    63 · 65 (mod 15) ≡ 0 </div>
 
-(64 − 1)(64 + 1) = 63 · 65</div>
-        <div class="step-body">Computing GCDs:</div>
-        <div class="formula">gcd(63, 15) = <strong>3</strong>
-gcd(65, 15) = <strong>5</strong></div>
+        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 3: Compute GCDs to extract factors</div>
+        <div class="formula">gcd(x^{r/2} − 1, N) = gcd(63, 15) = <strong style="color:var(--green);">3</strong>
+    <br>
+    gcd(x^{r/2} + 1, N) = gcd(65, 15) = <strong style="color:var(--green);">5</strong></div>
+
+        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Result:</div>
         <div class="factor-reveal">
           <div class="fr-eq">15 = 3 × 5</div>
-          <div class="fr-label">Factored successfully</div>
+          <div class="fr-label">✓ Factored successfully</div>
         </div>`;
       }
-    },
+    }
+
   ];
 
   function drawWave(canvas) {
@@ -811,7 +806,7 @@ gcd(65, 15) = <strong>5</strong></div>
     ctx.clearRect(0, 0, w, h);
 
     const r = 4;
-    ctx.strokeStyle = '#3d8bff';
+    ctx.strokeStyle = '#0052cc';
     ctx.lineWidth = 3;
     ctx.beginPath();
 
@@ -827,7 +822,7 @@ gcd(65, 15) = <strong>5</strong></div>
 
     const peakPositions = [0, w/3, 2*w/3, w-1];
     peakPositions.forEach(px => {
-      ctx.strokeStyle = 'rgba(245,166,35,0.8)';
+      ctx.strokeStyle = 'rgba(217,119,6,0.8)';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 4]);
       ctx.beginPath();
