@@ -287,18 +287,23 @@
       font-weight: 700;
     }
 
-    /* ── FORMULA BLOCKS ── */
-    .formula {
-      background: var(--bg3);
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
-      padding: 20px 28px;
-      margin: 20px 0;
-      font-size: 20px;
-      color: var(--text);
-      overflow-x: auto;
-      line-height: 2.2;
-    }
+     /* ── FORMULA BLOCKS ── */
+     .formula {
+       background: linear-gradient(135deg, rgba(240,244,249,0.5) 0%, rgba(255,255,255,0.7) 100%);
+       border: 1px solid rgba(0,82,204,0.18);
+       border-left: 5px solid var(--cyan);
+       border-radius: 2px;
+       padding: 28px 36px;
+       margin: 24px 0;
+       font-size: 18px;
+       color: var(--text);
+       overflow-x: auto;
+       line-height: 2.5;
+       letter-spacing: 0.2px;
+       box-shadow: 0 2px 16px rgba(0,82,204,0.08), inset 0 1px 3px rgba(255,255,255,0.5);
+       font-family: 'Georgia', 'Cambria', 'Palatino', serif;
+       word-spacing: 0.15em;
+     }
 
     /* ── INFO GRID ── */
     .info-grid {
@@ -654,11 +659,11 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
         </div>`;
       }
     },
-          {
-            num: "Step 1",
-            title: "Hadamard superposition",
-            render(el) {
-              el.innerHTML = `
+    {
+      num: "Step 1",
+      title: "Hadamard superposition",
+      render(el) {
+        el.innerHTML = `
               <div class="step-body">We apply a Hadamard gate to each qubit in the control register,
           putting all M = 2048 basis states into an equal superposition.</div>
               <div class="formula">|0⟩⊗ᴷ  →  H⊗ᴷ  →  1/√M ∑ |j⟩   for j = 0 … M−1</div>
@@ -666,8 +671,8 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
               <div class="formula" style="font-size:18px; line-height:2.4; overflow-x:auto; word-break: break-word;">
           1/√2048 (|00000000000⟩ + |00000000001⟩ + |00000000010⟩ + |00000000011⟩ + |00000000100⟩ + |00000000101⟩ + |00000000110⟩ + |00000000111⟩ + … + |11111111100⟩ + |11111111101⟩+ |11111111110⟩ + |11111111111⟩) = 1/√2048 (|0⟩ + |1⟩ + |2⟩ + |3⟩ + |4⟩ + |5⟩ + |6⟩ + |7⟩ + … + |2044⟩ + |2045⟩ + |2046⟩ + |2047⟩)
               </div>`;
-            }
-          },
+      }
+    },
 
     {
       num: "Step 2",
@@ -676,10 +681,10 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
         el.innerHTML = `
         <div class="step-body">We choose a random base x = 8 coprime to N = 15, then entangle the registers.</div>
         <div class="formula">|ψ⟩ = 1/√M ∑ⱼ |j⟩ ⊗ |8ʲ mod 15⟩</div>
-        <div class="step-body">The first terms unroll as:</div>
-        <div class="formula">|0⟩|1⟩ + |1⟩|8⟩ + |2⟩|4⟩ + |3⟩|2⟩
+        <div class="step-body">The terms unroll as:</div>
+        <div class="formula"> 1/√2048 (|0⟩|1⟩ + |1⟩|8⟩ + |2⟩|4⟩ + |3⟩|2⟩
 |4⟩|1⟩ + |5⟩|8⟩ + |6⟩|4⟩ + |7⟩|2⟩
-|8⟩|1⟩ + |9⟩|8⟩ + |10⟩|4⟩ + |11⟩|2⟩ + ... + |2046⟩|1⟩ + |2045⟩|8⟩ +|2046⟩|4⟩ +|2047⟩|2⟩
+|8⟩|1⟩ + |9⟩|8⟩ + |10⟩|4⟩ + |11⟩|2⟩ + ... + |2044⟩|1⟩ + |2045⟩|8⟩ +|2046⟩|4⟩ +|2047⟩|2⟩
    ⋮       (pattern repeats every 4 steps)</div>`;
       }
     },
@@ -694,13 +699,13 @@ M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← s
         el.innerHTML = `
         <div class="step-body">Grouping by the target register value reveals a repeating pattern — the period <em>r</em>.</div>
         <div class="formula">
-    (|0⟩ + |4⟩ + |8⟩ + …)|1⟩  ← period group A
+    1/√2048 (|0⟩ + |4⟩ + |8⟩ + … + |2040⟩ + |2044⟩)|1⟩  ← period group A
     <br>
-    (|1⟩ + |5⟩ + |9⟩ + …)|8⟩  ← period group B
+    1/√2048 (|1⟩ + |5⟩ + |9⟩ + … + |2041⟩ + |2045⟩)|8⟩  ← period group B
     <br>
-    (|2⟩ + |6⟩ + |10⟩ + …)|4⟩ ← period group C
+    1/√2048 (|2⟩ + |6⟩ + |10⟩ + … + |2042⟩ + |2046⟩)|4⟩ ← period group C
     <br>
-    (|3⟩ + |7⟩ + |11⟩ + …)|2⟩ ← period group D
+    1/√2048 (|3⟩ + |7⟩ + |11⟩ + … + |2043⟩ + |2047⟩)|2⟩ ← period group D
         </div>
         <div class="step-body" style="margin-bottom:12px;">Sequence of 8ʲ mod 15:</div>
         <div class="period-row">
