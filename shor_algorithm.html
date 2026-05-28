@@ -1,1022 +1,1165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Shor's Algorithm — Classroom Edition</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Shor Algorithm Interactive Classroom Lab</title>
   <style>
     :root {
       --bg: #ffffff;
-      --bg2: #f8fafc;
-      --bg3: #f1f5f9;
-      --border: rgba(30,95,212,0.20);
-      --border-bright: rgba(30,95,212,0.35);
-      --cyan: #0052cc;
-      --cyan-bright: #0052cc;
-      --cyan-dim: rgba(0,82,204,0.08);
-      --green: #00a854;
-      --green-dim: rgba(0,168,84,0.10);
-      --amber: #d97706;
-      --amber-dim: rgba(217,119,6,0.10);
-      --red: #dc2626;
-      --text: #1a202c;
-      --text-dim: #4a5568;
-      --text-muted: #9ca3af;
-      --mono: 'Space Mono', monospace;
-      --display: 'Syne', sans-serif;
+      --surface: #f4f7fb;
+      --surface-strong: #eaf0f8;
+      --text: #111827;
+      --muted: #374151;
+      --line: #c8d4e7;
+      --accent: #0b5fff;
+      --green: #0a8f44;
+      --orange: #b45309;
+      --red: #b91c1c;
+      --focus: #ffe08a;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; }
 
     body {
+      margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: var(--mono);
-      font-size: 20px;
-      line-height: 1.8;
-      min-height: 100vh;
-      overflow-x: hidden;
+      font-family: "Inter", "Segoe UI", Arial, sans-serif;
+      line-height: 1.5;
     }
 
-    /* Grid background */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-              linear-gradient(rgba(0,82,204,0.06) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0,82,204,0.06) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: 0;
+    .control-panel {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #ffffff;
+      border-bottom: 3px solid var(--line);
+      padding: 18px 20px;
     }
 
-    /* ── SPEAKER BAR ── */
-    .speaker-bar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 200;
-      background: rgba(240,244,249,0.97);
-      border-bottom: 2px solid var(--cyan);
-      padding: 14px 40px;
-      display: flex;
-      align-items: center;
-      gap: 18px;
-      min-height: 72px;
-      backdrop-filter: blur(8px);
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(80px, 1fr));
+      gap: 14px;
+      align-items: end;
     }
 
-    .speaker-icon {
-      font-size: 28px;
-      flex-shrink: 0;
-      animation: pulse-icon 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse-icon {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .speaker-text {
-      font-family: var(--display);
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.3px;
-      line-height: 1.3;
-      flex: 1;
-    }
-
-    .speaker-step-badge {
-      font-size: 13px;
-      font-family: var(--mono);
-      color: var(--cyan-bright);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      flex-shrink: 0;
-    }
-
-    /* ── PROGRESS BAR ── */
-    .progress-bar {
-      position: fixed;
-      top: 72px; left: 0; right: 0;
-      height: 4px;
-      background: rgba(0,82,204,0.1);
-      z-index: 199;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--cyan), var(--cyan-bright));
-      transition: width 0.5s ease;
-      box-shadow: 0 0 12px rgba(0,82,204,0.4);
-    }
-
-    /* ── TIMER BAR ── */
-    .timer-bar {
-      position: fixed;
-      top: 76px; left: 0; right: 0;
-      height: 3px;
-      background: transparent;
-      z-index: 199;
-    }
-
-    .timer-fill {
-      height: 100%;
-      background: var(--amber);
-      width: 100%;
-      transform-origin: left;
-      opacity: 0;
-    }
-
-    .timer-fill.running {
-      opacity: 1;
-      transition: transform linear, opacity 0.3s;
-    }
-
-    /* ── MAIN SHELL ── */
-    .shell {
-      position: relative;
-      z-index: 1;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 110px 32px 120px;
-    }
-
-    header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 52px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 28px;
-    }
-
-    .header-title {
-      font-family: var(--display);
-      font-size: 52px;
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1;
-      color: var(--cyan-bright);
-    }
-
-    .header-sub {
-      font-size: 14px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-top: 10px;
-    }
-
-    .badge {
-      font-size: 18px;
-      font-family: var(--display);
-      font-weight: 800;
-      padding: 8px 20px;
-      border-radius: 4px;
-      border: 2px solid var(--cyan-bright);
-      color: var(--cyan-bright);
-      letter-spacing: 1px;
-      margin-top: 4px;
-      box-shadow: 0 0 20px rgba(0,82,204,0.15);
-    }
-
-    /* ── STEP CARDS ── */
-    .step-list {
+    .control-item {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 8px;
     }
 
-    .step-card {
-      position: relative;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-top: none;
-      padding: 36px 40px;
-      animation: fadeSlide 0.5s ease both;
-      overflow: hidden;
-      transition: opacity 0.5s, filter 0.5s;
-    }
-
-    .step-card:first-child {
-      border-top: 1px solid var(--border);
-      border-radius: 6px 6px 0 0;
-    }
-
-    .step-card:last-child {
-      border-radius: 0 0 6px 6px;
-    }
-
-    /* Focus mode: dim past steps */
-    .step-card.past {
-      opacity: 0.4;
-      filter: none;
-    }
-
-    .step-card.active {
-      opacity: 1;
-      filter: none;
-      border-left: 3px solid var(--cyan-bright);
-      box-shadow: 0 0 40px rgba(61,139,255,0.06) inset;
-    }
-
-    .step-card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: linear-gradient(180deg, var(--cyan), transparent);
-      opacity: 0.5;
-    }
-
-    .step-card.active::before {
-      opacity: 0;
-    }
-
-    @keyframes fadeSlide {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .step-header {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .step-num {
-      font-family: var(--display);
-      font-size: 14px;
+    .control-item label {
+      font-size: clamp(18px, 1.5vw, 22px);
       font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--cyan-bright);
-      flex-shrink: 0;
-      opacity: 0.7;
+      color: var(--muted);
     }
 
-    .step-title {
-      font-family: var(--display);
-      font-size: 36px;
-      font-weight: 800;
+    input[type="number"],
+    select,
+    button {
+      font-size: clamp(20px, 1.8vw, 24px);
+      min-height: 52px;
+      padding: 8px 12px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
       color: var(--text);
-      letter-spacing: -0.5px;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 14px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    button.toggled {
+      background: #dbe8ff;
+      border-color: var(--accent);
+      color: #08357f;
+    }
+
+    .pill {
+      font-size: clamp(18px, 1.5vw, 22px);
+      font-weight: 700;
+      padding: 10px 14px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      background: #fff;
+    }
+
+    #validationMessage {
+      margin-top: 10px;
+      min-height: 30px;
+      font-size: clamp(20px, 1.7vw, 24px);
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .narration {
+      border-bottom: 3px solid var(--line);
+      padding: 16px 22px;
+      background: #fbfdff;
+      font-size: clamp(22px, 2vw, 30px);
+      font-weight: 700;
+      color: #10294f;
+    }
+
+    .wrapper {
+      padding: 22px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .section {
+      margin-bottom: 22px;
+      border: 3px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      background: var(--surface);
+      transition: opacity .3s ease;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: clamp(42px, 4vw, 64px);
       line-height: 1.1;
     }
 
-    .step-body {
-      font-size: 19px;
-      line-height: 1.9;
-      color: var(--text-dim);
+    .section h3 {
+      margin: 12px 0 8px;
+      font-size: clamp(28px, 2.4vw, 40px);
+    }
+
+    .section p,
+    .section li,
+    .formula,
+    .stat,
+    .caption,
+    table {
+      font-size: clamp(22px, 1.9vw, 30px);
+    }
+
+    .section.dimmed { opacity: .3; }
+    .section.hidden-step { display: none; }
+    .section.active-step {
+      outline: 5px solid var(--focus);
+      background: #fffef5;
+    }
+
+    .formula {
+      background: #fff;
+      border: 2px solid var(--line);
+      border-left: 10px solid var(--accent);
+      padding: 14px;
+      margin: 12px 0;
+      font-weight: 700;
+      overflow-x: auto;
       white-space: pre-wrap;
     }
 
-    .step-body em {
-      color: var(--amber);
-      font-style: normal;
-      font-weight: 700;
-    }
-
-    .step-body strong {
-      color: var(--cyan-bright);
-      font-weight: 700;
-    }
-
-     /* ── FORMULA BLOCKS ── */
-     .formula {
-       background: linear-gradient(135deg, rgba(240,244,249,0.5) 0%, rgba(255,255,255,0.7) 100%);
-       border: 1px solid rgba(0,82,204,0.18);
-       border-left: 5px solid var(--cyan);
-       border-radius: 2px;
-       padding: 28px 36px;
-       margin: 24px 0;
-       font-size: 18px;
-       color: var(--text);
-       overflow-x: auto;
-       line-height: 2.5;
-       letter-spacing: 0.2px;
-       box-shadow: 0 2px 16px rgba(0,82,204,0.08), inset 0 1px 3px rgba(255,255,255,0.5);
-       font-family: 'Georgia', 'Cambria', 'Palatino', serif;
-       word-spacing: 0.15em;
-     }
-
-    /* ── INFO GRID ── */
-    .info-grid {
+    .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      margin: 20px 0;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
     }
 
-    .info-cell {
-      background: var(--bg3);
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
-      padding: 20px 20px;
+    .stat {
+      border: 2px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
       text-align: center;
-    }
-
-    .info-cell .ic-label {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-
-    .info-cell .ic-value {
-      font-family: var(--display);
-      font-size: 52px;
       font-weight: 800;
-      color: var(--cyan-bright);
-      line-height: 1;
     }
 
-    /* ── HADAMARD STATES ── */
-    .hstates {
+    .toggle-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin: 20px 0;
+      margin-bottom: 10px;
     }
 
-    .hstate {
-      background: var(--bg3);
-      border: 1px solid var(--border-bright);
-      border-radius: 4px;
-      padding: 6px 14px;
-      font-size: 16px;
-      color: var(--cyan-bright);
-      animation: popIn 0.2s ease both;
-    }
+    .toggle-row button { min-height: 46px; font-size: clamp(18px, 1.5vw, 22px); }
 
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to   { opacity: 1; transform: scale(1); }
-    }
-
-    /* ── PERIOD ROW ── */
-    .period-row {
-      display: flex;
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
-      overflow: hidden;
-      margin: 20px 0;
-    }
-
-    .period-cell {
-      flex: 1;
-      padding: 18px 10px;
-      text-align: center;
-      border-right: 1px solid var(--border);
-      transition: background 0.3s;
-    }
-
-    .period-cell:last-child { border-right: none; }
-
-    .period-cell .pc-idx {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    .period-cell .pc-val {
-      font-size: 32px;
-      font-family: var(--display);
-      font-weight: 800;
-    }
-
-    .pc-1 .pc-val { color: var(--cyan-bright); }
-    .pc-2 .pc-val { color: var(--green); }
-    .pc-3 .pc-val { color: var(--amber); }
-    .pc-4 .pc-val { color: var(--red); }
-
-    /* ── QFT PEAKS ── */
-    .qft-axis {
-      position: relative;
-      height: 160px;
-      border: 1px solid var(--border-bright);
-      border-radius: 6px;
-      background: var(--bg3);
-      margin: 20px 0;
-      overflow: hidden;
-    }
-
-    .qft-baseline {
-      position: absolute;
-      bottom: 30px; left: 20px; right: 20px;
-      height: 1px;
-      background: var(--border-bright);
-    }
-
-    .qft-peak {
-      position: absolute;
-      bottom: 31px;
-      width: 4px;
-      background: linear-gradient(0deg, var(--cyan), var(--cyan-bright));
-      border-radius: 2px 2px 0 0;
-      transform-origin: bottom;
-      transform: scaleY(0);
-      transition: transform 0.7s cubic-bezier(0.23,1,0.32,1);
-      box-shadow: 0 0 10px rgba(0,82,204,0.4);
-    }
-
-    .qft-peak-label {
-      position: absolute;
-      bottom: 6px;
-      font-size: 13px;
-      color: var(--text-dim);
-      text-align: center;
-      transform: translateX(-50%);
-      font-family: var(--mono);
-    }
-
-    /* ── CANVASES ── */
     canvas {
+      width: 100%;
+      min-height: 260px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
       display: block;
-      margin: 20px auto;
-      border-radius: 6px;
-      background: var(--bg3);
-      border: 2px solid var(--border-bright);
+      margin-top: 10px;
     }
 
-    /* ── FACTOR REVEAL ── */
-    .factor-reveal {
-      background: var(--green-dim);
-      border: 2px solid var(--green);
-      border-radius: 8px;
-      padding: 32px 32px;
-      margin: 24px 0;
-      text-align: center;
-      box-shadow: 0 0 40px rgba(0,201,122,0.15);
-    }
-
-    .factor-reveal .fr-eq {
-      font-family: var(--display);
-      font-size: 64px;
-      font-weight: 800;
-      color: var(--green);
-      letter-spacing: -2px;
-      line-height: 1;
-    }
-
-    .factor-reveal .fr-label {
-      font-size: 14px;
-      color: var(--green);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-top: 12px;
-      opacity: 0.7;
-    }
-
-    /* ── NEXT / CONTROL BUTTONS ── */
-    .btn-next {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 28px;
-      padding: 14px 30px;
-      background: transparent;
-      border: 2px solid var(--cyan-bright);
-      border-radius: 4px;
-      color: var(--cyan-bright);
-      font-family: var(--mono);
-      font-size: 16px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .btn-next:hover {
-      background: rgba(61,139,255,0.1);
-      box-shadow: 0 0 20px rgba(61,139,255,0.25);
-    }
-
-    .btn-next:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    /* ── AUTO-PLAY CONTROLS ── */
-    .controls-bar {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 200;
-      display: flex;
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      align-items: center;
-      background: rgba(255,255,255,0.95);
-      border: 1px solid var(--border-bright);
-      border-radius: 50px;
-      padding: 10px 24px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
     }
 
-    .ctrl-btn {
-      background: transparent;
-      border: 1px solid var(--border-bright);
-      color: var(--text-dim);
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 8px 18px;
-      border-radius: 30px;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 2px solid var(--line);
     }
 
-    .ctrl-btn:hover {
-      background: var(--cyan-dim);
-      color: var(--cyan-bright);
-      border-color: var(--cyan-bright);
+    th, td {
+      border: 2px solid var(--line);
+      padding: 8px;
+      text-align: left;
     }
 
-    .ctrl-btn.active {
-      background: var(--cyan-dim);
-      color: var(--cyan-bright);
-      border-color: var(--cyan-bright);
+    .success { color: var(--green); font-weight: 900; }
+    .warn { color: var(--orange); font-weight: 900; }
+
+    .footer-controls {
+      position: sticky;
+      bottom: 0;
+      z-index: 20;
+      background: #fff;
+      border-top: 3px solid var(--line);
+      padding: 10px 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .ctrl-sep {
-      width: 1px;
-      height: 20px;
-      background: var(--border-bright);
+    .footer-controls button,
+    .footer-controls select {
+      font-size: clamp(18px, 1.5vw, 22px);
+      min-height: 48px;
     }
 
-    .ctrl-speed-label {
-      font-size: 12px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      white-space: nowrap;
-    }
-
-    /* ── DIVIDER ── */
-    .divider {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 24px 0;
+    @media (max-width: 1100px) {
+      .split { grid-template-columns: 1fr; }
+      .control-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
     }
   </style>
 </head>
 <body>
-
-<!-- Speaker bar (professor voice) -->
-<div class="speaker-bar" id="speakerBar">
-  <span class="speaker-icon">🎓</span>
-  <span class="speaker-text" id="speakerText">Welcome — let's factor 15 with a quantum computer.</span>
-  <span class="speaker-step-badge" id="speakerBadge">Intro</span>
-</div>
-
-<!-- Progress bar -->
-<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-
-<!-- Auto-advance timer bar -->
-<div class="timer-bar"><div class="timer-fill" id="timerFill"></div></div>
-
-<div class="shell">
-  <header>
-    <div>
-      <div class="header-title">Shor's Algorithm</div>
-      <div class="header-sub">Quantum factoring — step by step</div>
+<div class="control-panel">
+  <div class="control-grid">
+    <div class="control-item" style="grid-column: span 2;">
+      <label for="nInput">N (odd composite)</label>
+      <input id="nInput" type="number" min="3" step="1" value="15" />
     </div>
-    <div class="badge">N = 15</div>
-  </header>
-
-  <div class="step-list" id="root"></div>
+    <div class="control-item" style="grid-column: span 3;">
+      <label for="epsilonInput">ε (precision): <span id="epsilonValue">0.25</span></label>
+      <input id="epsilonInput" type="range" min="0.01" max="0.5" step="0.01" value="0.25" />
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label for="xInput">x (coprime)</label>
+      <input id="xInput" type="number" min="2" step="1" value="2" />
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label>&nbsp;</label>
+      <button id="randomXBtn">Generate Random Coprime x</button>
+    </div>
+    <div class="control-item" style="grid-column: span 2;">
+      <label>&nbsp;</label>
+      <button class="primary" id="recomputeBtn">Recompute Simulation</button>
+    </div>
+    <div class="control-item" style="grid-column: span 1;">
+      <label>&nbsp;</label>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </div>
+  <div id="validationMessage"></div>
 </div>
 
-<!-- Bottom controls -->
-<div class="controls-bar">
-  <button class="ctrl-btn" id="btnPrev" onclick="goBack()">← Prev</button>
-  <button class="ctrl-btn" id="btnNext2" onclick="manualNext()">Next →</button>
-  <div class="ctrl-sep"></div>
-  <button class="ctrl-btn" id="btnAuto" onclick="toggleAuto()">▶ Auto</button>
-  <div class="ctrl-sep"></div>
-  <span class="ctrl-speed-label">Speed:</span>
-  <button class="ctrl-btn" id="spd6" onclick="setSpeed(6)">Slow</button>
-  <button class="ctrl-btn active" id="spd4" onclick="setSpeed(4)">Normal</button>
-  <button class="ctrl-btn" id="spd2" onclick="setSpeed(2)">Fast</button>
+<div class="narration" id="narrationPanel">Ready. Update N, ε, or x to recompute the full simulation.</div>
+
+<div class="wrapper" id="wrapper">
+  <section class="section" data-step="0">
+    <h2>1) Live Register Computation</h2>
+    <div class="formula" id="formulaBlock"></div>
+    <div class="stats" id="statGrid"></div>
+  </section>
+
+  <section class="section" data-step="1">
+    <h2>2) Quantum Register Superposition</h2>
+    <div class="toggle-row">
+      <button id="modeAll">Show all states</button>
+      <button id="modeSample">Show sampled states</button>
+      <button id="modeHistogram">Show histogram</button>
+    </div>
+    <p id="superpositionInfo"></p>
+    <canvas id="superpositionCanvas" height="280"></canvas>
+  </section>
+
+  <section class="section" data-step="2">
+    <h2>3) Modular Exponentiation and Repetition</h2>
+    <p id="modInfo"></p>
+    <div class="formula" id="sequenceFormula"></div>
+    <canvas id="periodCanvas" height="320"></canvas>
+  </section>
+
+  <section class="section" data-step="3">
+    <h2>4) QFT: Periodicity → Frequency Peaks</h2>
+    <p id="qftInfo"></p>
+    <canvas id="qftCanvas" height="340"></canvas>
+  </section>
+
+  <section class="section" data-step="4">
+    <h2>5) Measurement Simulation</h2>
+    <button class="primary" id="measureBtn">Measure Register</button>
+    <p id="measurementInfo"></p>
+    <div class="formula" id="measurementFormula"></div>
+  </section>
+
+  <section class="section" data-step="5">
+    <h2>6) Continued Fractions (Interactive)</h2>
+    <p id="cfInfo"></p>
+    <table>
+      <thead><tr><th>Step</th><th>Candidate r</th><th>Test x^r mod N</th><th>Status</th></tr></thead>
+      <tbody id="cfTable"></tbody>
+    </table>
+  </section>
+
+  <section class="section" data-step="6">
+    <h2>7) Factor Extraction</h2>
+    <div class="formula" id="factorFormula"></div>
+    <p id="factorResult"></p>
+  </section>
+</div>
+
+<div class="footer-controls">
+  <button id="prevStepBtn">◀ Prev</button>
+  <button id="nextStepBtn">Next ▶</button>
+  <button id="classroomBtn">Classroom Mode: Off</button>
+  <button id="autoplayBtn">Auto Play: Off</button>
+  <label for="speedSelect" style="font-size:clamp(18px,1.5vw,22px); font-weight:700; align-self:center;">Speed</label>
+  <select id="speedSelect">
+    <option value="slow">slow</option>
+    <option value="normal" selected>normal</option>
+    <option value="fast">fast</option>
+  </select>
+  <button id="fullscreenBtn">Fullscreen</button>
+  <div class="pill" id="stepStatus">Section 1 / 7</div>
 </div>
 
 <script>
-  const N = 15;
-  const L = Math.ceil(Math.log2(N));
-  const K = 2 * L + 1 + Math.ceil(Math.log2(2 + 1 / (2 * 0.25)));
-  const M = Math.pow(2, K);
-  const TOTAL = 8;
+  const defaultState = {
+    N: 15,
+    epsilon: 0.25,
+    L: null,
+    K: null,
+    M: null,
+    x: null,
+    period: null,
+    superpositionMode: 'sample',
+    classroomMode: false,
+    currentSection: 0,
+    autoplay: false,
+    speed: 'normal',
+    sequence: [],
+    periodGroups: [],
+    qftPeaks: [],
+    measuredK: null,
+    phi: null,
+    recoveredR: null,
+    factorization: null,
+    measureAnimStart: 0,
+    cfAnimStart: 0,
+    validationError: ''
+  };
 
-  let step = 0;
-  let autoPlay = false;
-  let autoTimer = null;
-  let speedSec = 4;
-  const cardRefs = [];
+  const state = { ...defaultState };
+  const previousSnapshot = { N: state.N, epsilon: state.epsilon, x: null };
 
-  // Professor narrator lines per step
-  const speakerLines = [
-    "First — how many qubits do we need? We calculate the register sizes from N=15.",
-    "Now we apply Hadamard gates to put ALL 2048 states into superposition simultaneously.",
-    "We pick a random base x=8 and compute 8^j mod 15 for every j — all at once, quantumly.",
-    "Measuring the second register collapses it, revealing a hidden repeating structure — the period r.",
-    "The Quantum Fourier Transform converts that repeating pattern into sharp frequency peaks.",
-    "We measure the control register. The result encodes a fraction with r in the denominator.",
-    "Classical continued fractions extracts the period r=4 from the measured phase.",
-    "With r=4, a simple GCD calculation gives us the factors — 15 = 3 × 5. Done!",
-  ];
+  let autoplayTimer = null;
+  let animationFrame = null;
 
-  const steps = [
-    {
-      num: "Step 0",
-      title: "Choosing qubit sizes",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">We begin by computing how many qubits we need for both registers.</div>
-        <div class="formula">
-L = ⌈log₂ N⌉ = ⌈log₂ 15⌉ = 4    <span style="color:var(--text-muted)">← target register</span>
+  const elements = {
+    nInput: document.getElementById('nInput'),
+    epsilonInput: document.getElementById('epsilonInput'),
+    epsilonValue: document.getElementById('epsilonValue'),
+    xInput: document.getElementById('xInput'),
+    randomXBtn: document.getElementById('randomXBtn'),
+    recomputeBtn: document.getElementById('recomputeBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    validationMessage: document.getElementById('validationMessage'),
+    narrationPanel: document.getElementById('narrationPanel'),
+    formulaBlock: document.getElementById('formulaBlock'),
+    statGrid: document.getElementById('statGrid'),
+    superpositionInfo: document.getElementById('superpositionInfo'),
+    superpositionCanvas: document.getElementById('superpositionCanvas'),
+    modInfo: document.getElementById('modInfo'),
+    sequenceFormula: document.getElementById('sequenceFormula'),
+    periodCanvas: document.getElementById('periodCanvas'),
+    qftInfo: document.getElementById('qftInfo'),
+    qftCanvas: document.getElementById('qftCanvas'),
+    measureBtn: document.getElementById('measureBtn'),
+    measurementInfo: document.getElementById('measurementInfo'),
+    measurementFormula: document.getElementById('measurementFormula'),
+    cfInfo: document.getElementById('cfInfo'),
+    cfTable: document.getElementById('cfTable'),
+    factorFormula: document.getElementById('factorFormula'),
+    factorResult: document.getElementById('factorResult'),
+    modeAll: document.getElementById('modeAll'),
+    modeSample: document.getElementById('modeSample'),
+    modeHistogram: document.getElementById('modeHistogram'),
+    prevStepBtn: document.getElementById('prevStepBtn'),
+    nextStepBtn: document.getElementById('nextStepBtn'),
+    classroomBtn: document.getElementById('classroomBtn'),
+    autoplayBtn: document.getElementById('autoplayBtn'),
+    speedSelect: document.getElementById('speedSelect'),
+    fullscreenBtn: document.getElementById('fullscreenBtn'),
+    stepStatus: document.getElementById('stepStatus'),
+    sections: Array.from(document.querySelectorAll('.section'))
+  };
 
-K = 2L + 1 + ⌈log₂(2 + 1/(2ε))⌉
-K = 2·4 + 1 + ⌈log₂(2 + 2)⌉
-K = 9 + 2 = 11                   <span style="color:var(--text-muted)">← control register</span>
+  function gcd(a, b) {
+    let x = Math.abs(a), y = Math.abs(b);
+    while (y !== 0) {
+      const t = y;
+      y = x % y;
+      x = t;
+    }
+    return x;
+  }
 
-M = 2ᴷ = 2¹¹ = 2048              <span style="color:var(--text-muted)">← superposition size</span>
-        </div>
-        <div class="info-grid">
-          <div class="info-cell"><div class="ic-label">L (target)</div><div class="ic-value">${L}</div></div>
-          <div class="info-cell"><div class="ic-label">K (control)</div><div class="ic-value">${K}</div></div>
-          <div class="info-cell"><div class="ic-label">M (states)</div><div class="ic-value">${M}</div></div>
-          <div class="info-cell"><div class="ic-label">ε (error)</div><div class="ic-value">0.25</div></div>
-        </div>`;
-      }
-    },
-    {
-      num: "Step 1",
-      title: "Hadamard superposition",
-      render(el) {
-        el.innerHTML = `
-              <div class="step-body">We apply a Hadamard gate to each qubit in the control register,
-          putting all M = 2048 basis states into an equal superposition.</div>
-              <div class="formula">|0⟩⊗ᴷ  →  H⊗ᴷ  →  1/√M ∑ |j⟩   for j = 0 … M−1</div>
-              <div class="step-body" style="margin:14px 0 6px;">The resulting superposition state:</div>
-              <div class="formula" style="font-size:18px; line-height:2.4; overflow-x:auto; word-break: break-word;">
-          1/√2048 (|00000000000⟩ + |00000000001⟩ + |00000000010⟩ + |00000000011⟩ + |00000000100⟩ + |00000000101⟩ + |00000000110⟩ + |00000000111⟩ + … + |11111111100⟩ + |11111111101⟩+ |11111111110⟩ + |11111111111⟩) = 1/√2048 (|0⟩ + |1⟩ + |2⟩ + |3⟩ + |4⟩ + |5⟩ + |6⟩ + |7⟩ + … + |2044⟩ + |2045⟩ + |2046⟩ + |2047⟩)
-              </div>`;
-      }
-    },
+  function isComposite(n) {
+    if (n < 4) return false;
+    for (let i = 2; i * i <= n; i++) if (n % i === 0) return true;
+    return false;
+  }
 
-    {
-      num: "Step 2",
-      title: "Modular exponentiation",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">We choose a random base x = 8 coprime to N = 15, then entangle the registers.</div>
-        <div class="formula">|ψ⟩ = 1/√M ∑ⱼ |j⟩ ⊗ |8ʲ mod 15⟩</div>
-        <div class="step-body">The terms unroll as:</div>
-        <div class="formula"> 1/√2048 (|0⟩|1⟩ + |1⟩|8⟩ + |2⟩|4⟩ + |3⟩|2⟩
-|4⟩|1⟩ + |5⟩|8⟩ + |6⟩|4⟩ + |7⟩|2⟩
-|8⟩|1⟩ + |9⟩|8⟩ + |10⟩|4⟩ + |11⟩|2⟩ + ... + |2044⟩|1⟩ + |2045⟩|8⟩ +|2046⟩|4⟩ +|2047⟩|2⟩
-   ⋮       (pattern repeats every 4 steps)</div>`;
-      }
-    },
+  function powMod(base, exp, mod) {
+    let b = ((base % mod) + mod) % mod;
+    let e = exp;
+    let result = 1;
+    while (e > 0) {
+      if (e & 1) result = (result * b) % mod;
+      b = (b * b) % mod;
+      e >>= 1;
+    }
+    return result;
+  }
 
-    {
-      num: "Step 3",
-      title: "Hidden periodicity",
-      render(el) {
-        const seq = [1, 8, 4, 2, 1, 8, 4, 2];
-        const cols = ['pc-1', 'pc-2', 'pc-3', 'pc-4', 'pc-1', 'pc-2', 'pc-3', 'pc-4'];
+  function chooseRandomCoprime(n) {
+    const candidates = [];
+    for (let i = 2; i < n; i++) {
+      if (gcd(i, n) === 1) candidates.push(i);
+    }
+    if (!candidates.length) return null;
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
 
-        el.innerHTML = `
-        <div class="step-body">Grouping by the target register value reveals a repeating pattern — the period <em>r</em>.</div>
-        <div class="formula">
-    1/√2048 (|0⟩ + |4⟩ + |8⟩ + … + |2040⟩ + |2044⟩)|1⟩  ← period group A
-    <br>
-    1/√2048 (|1⟩ + |5⟩ + |9⟩ + … + |2041⟩ + |2045⟩)|8⟩  ← period group B
-    <br>
-    1/√2048 (|2⟩ + |6⟩ + |10⟩ + … + |2042⟩ + |2046⟩)|4⟩ ← period group C
-    <br>
-    1/√2048 (|3⟩ + |7⟩ + |11⟩ + … + |2043⟩ + |2047⟩)|2⟩ ← period group D
-        </div>
-        <div class="step-body" style="margin-bottom:12px;">Sequence of 8ʲ mod 15:</div>
-        <div class="period-row">
-          ${seq.map((v,i) => `
-            <div class="period-cell ${cols[i]}">
-              <div class="pc-idx">j=${i}</div>
-              <div class="pc-val">${v}</div>
-            </div>`).join('')}
-        </div>
-        <div class="step-body" style="margin-top:12px;">Pattern: <strong>1 → 8 → 4 → 2 → 1 → …</strong>  ∴  <em>r = 4</em></div>`;
-      }
-    },
+  function computeRegisters() {
+    state.L = Math.ceil(Math.log2(state.N));
+    state.K = 2 * state.L + 1 + Math.ceil(Math.log2(2 + 1 / (2 * state.epsilon)));
+    state.M = Math.pow(2, state.K);
+  }
 
-    {
-      num: "Step 4",
-      title: "Quantum Fourier Transform",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">The QFT converts periodicity into frequency. Phases interfere constructively
-only at multiples of M/r = 2048/4 = 512.</div>
-        <div class="formula">QFT : 1/√r ∑ₖ e^{2πi·k/r} |k·M/r⟩
+  function computePeriod() {
+    const sequenceLength = Math.min(state.M, Math.max(64, state.N * 8));
+    const sequence = [];
+    for (let j = 0; j < sequenceLength; j++) {
+      sequence.push(powMod(state.x, j, state.N));
+    }
 
-constructive peaks at k = 0, 512, 1024, 1536</div>
-        <div class="step-body" style="margin:14px 0 6px;">Interference pattern (phase sums across r=4 components):</div>
-        <canvas id="waveCanvas" width="800" height="140" style="width:100%; height:140px;"></canvas>
-        <div class="step-body" style="margin:14px 0 6px;">Frequency-domain peaks after QFT:</div>
-        <div class="qft-axis" id="qftAxis">
-          <div class="qft-baseline"></div>
-        </div>`;
-
-        drawWave(el.querySelector('#waveCanvas'));
-        setTimeout(() => drawQFTPeaks(el.querySelector('#qftAxis')), 300);
-      }
-    },
-
-    {
-      num: "Step 5",
-      title: "Measurement",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">We measure the control register. Suppose we observe:</div>
-        <div class="formula" style="font-size:52px; text-align:center; color:var(--cyan-bright); padding:32px; letter-spacing:-2px;">k = 1536</div>
-        <div class="step-body">Converting to a phase fraction:</div>
-        <div class="formula">φ = k / M = 1536 / 2048 = <em>3/4</em></div>`;
-      }
-    },
-
-    {
-      num: "Step 6",
-      title: "Continued fractions",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">We apply the continued fractions algorithm to recover the period from the measured phase.</div>
-        <div class="formula">φ = 0.75
-
-Continued fraction expansion:
-0.75 = 3/4
-
-Denominator → candidate period: <em>r = 4</em>
-
-Verify: 8⁴ mod 15 = 4096 mod 15 = <strong>1</strong> ✓</div>`;
-      }
-    },
-    {
-      num: "Step 7",
-      title: "Factorization",
-      render(el) {
-        el.innerHTML = `
-        <div class="step-body">With period r = 4, we exploit the algebraic identity to find factors of N = 15:</div>
-
-        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 1: Use the period identity</div>
-        <div class="formula">xʳ (mod N) ≡ 1
-    ⇒  xʳ − 1 (mod N) ≡ 0
-    ⇒  (x^{r/2} − 1)(x^{r/2} + 1) (mod N) ≡ 0 </div>
-
-        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 2: Substitute x = 8, r = 4</div>
-        <div class="formula">r/2 = 4/2 = 2
-    x^{r/2} = 8² = 64
-    <br>
-    (64 − 1)(64 + 1) (mod 15) ≡ 0
-    <br>
-    63 · 65 (mod 15) ≡ 0 </div>
-
-        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Step 3: Compute GCDs to extract factors</div>
-        <div class="formula">gcd(x^{r/2} − 1, N) = gcd(63, 15) = <strong style="color:var(--green);">3</strong>
-    <br>
-    gcd(x^{r/2} + 1, N) = gcd(65, 15) = <strong style="color:var(--green);">5</strong></div>
-
-        <div class="step-body" style="margin-top:16px; color:var(--text-dim); font-size:16px;">Result:</div>
-        <div class="factor-reveal">
-          <div class="fr-eq">15 = 3 × 5</div>
-          <div class="fr-label">✓ Factored successfully</div>
-        </div>`;
+    let period = null;
+    for (let r = 1; r <= state.N * 2; r++) {
+      if (powMod(state.x, r, state.N) === 1) {
+        period = r;
+        break;
       }
     }
 
-  ];
+    const map = new Map();
+    sequence.forEach((v, j) => {
+      if (!map.has(v)) map.set(v, []);
+      map.get(v).push(j);
+    });
 
-  function drawWave(canvas) {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
+    const periodGroups = Array.from(map.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([value, js], idx) => ({
+        value,
+        js,
+        index: idx,
+        color: `hsl(${(idx * 67) % 360} 85% 45%)`
+      }));
 
-    const r = 4;
-    ctx.strokeStyle = '#0052cc';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
+    state.sequence = sequence;
+    state.period = period;
+    state.periodGroups = periodGroups;
+  }
 
-    for (let x = 0; x < w; x++) {
-      let sum = 0;
-      for (let k = 0; k < r; k++) {
-        sum += Math.cos((2 * Math.PI * k * x) / (w / 3));
-      }
-      const y = h / 2 - sum * (h * 0.2);
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  function computeQFTPeaks() {
+    if (!state.period || state.period <= 0) {
+      state.qftPeaks = [];
+      return;
     }
-    ctx.stroke();
-
-    const peakPositions = [0, w/3, 2*w/3, w-1];
-    peakPositions.forEach(px => {
-      ctx.strokeStyle = 'rgba(217,119,6,0.8)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.moveTo(px, 10);
-      ctx.lineTo(px, h - 10);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    });
+    const set = new Set();
+    for (let m = 0; m < state.period; m++) {
+      set.add(Math.round((m * state.M) / state.period));
+    }
+    state.qftPeaks = Array.from(set).sort((a, b) => a - b);
   }
 
-  function drawQFTPeaks(container) {
-    if (!container) return;
-    const peaks = [0, 512, 1024, 1536];
-    const labels = ['0', '512', '1024', '1536'];
-    const containerW = container.offsetWidth || 800;
-    const left = 40, right = containerW - 40;
-    const usable = right - left;
-
-    peaks.forEach((p, i) => {
-      const x = left + (p / 2048) * usable;
-
-      const bar = document.createElement('div');
-      bar.className = 'qft-peak';
-      bar.style.left = x + 'px';
-      bar.style.height = '110px';
-      container.appendChild(bar);
-      setTimeout(() => { bar.style.transform = 'scaleY(1)'; }, i * 180 + 100);
-
-      const lbl = document.createElement('div');
-      lbl.className = 'qft-peak-label';
-      lbl.style.left = x + 'px';
-      lbl.textContent = labels[i];
-      container.appendChild(lbl);
-    });
+  function continuedFraction(value, maxIter = 8) {
+    const a = [];
+    let x = value;
+    for (let i = 0; i < maxIter; i++) {
+      const ai = Math.floor(x);
+      a.push(ai);
+      const frac = x - ai;
+      if (Math.abs(frac) < 1e-10) break;
+      x = 1 / frac;
+    }
+    return a;
   }
 
-  function updateSpeaker(stepIdx) {
-    const text = speakerLines[stepIdx] || '';
-    const badge = steps[stepIdx] ? steps[stepIdx].num : '';
-    document.getElementById('speakerText').textContent = text;
-    document.getElementById('speakerBadge').textContent = badge;
+  function convergents(cf) {
+    const out = [];
+    let h1 = 1, h0 = 0, k1 = 0, k0 = 1;
+    for (const a of cf) {
+      const h = a * h1 + h0;
+      const k = a * k1 + k0;
+      out.push({ num: h, den: k });
+      h0 = h1; h1 = h;
+      k0 = k1; k1 = k;
+    }
+    return out;
   }
 
-  function updateFocusMode() {
-    cardRefs.forEach((card, i) => {
-      card.classList.remove('past', 'active');
-      if (i < step - 1) card.classList.add('past');
-      else if (i === step - 1) card.classList.add('active');
-    });
+  function recoverPeriodFromMeasurement() {
+    if (state.measuredK == null) return;
+    state.phi = state.measuredK / state.M;
+    const cf = continuedFraction(state.phi, 10);
+    const conv = convergents(cf);
+    let recovered = null;
+    for (const c of conv) {
+      if (c.den > 0 && c.den <= state.N * 2 && powMod(state.x, c.den, state.N) === 1) {
+        recovered = c.den;
+        break;
+      }
+    }
+    state.recoveredR = recovered;
   }
 
-  function nextStep() {
-    if (step >= steps.length) return false;
+  function factorFromPeriod() {
+    const r = state.recoveredR;
+    if (!r || r % 2 !== 0) {
+      state.factorization = null;
+      return;
+    }
+    const xr2 = Math.pow(state.x, r / 2);
+    const a = Math.round(xr2 - 1);
+    const b = Math.round(xr2 + 1);
+    const p = gcd(a, state.N);
+    const q = gcd(b, state.N);
+    if (p > 1 && q > 1 && p * q === state.N) {
+      state.factorization = { r, xr2, a, b, p, q, success: true };
+    } else {
+      state.factorization = { r, xr2, a, b, p, q, success: false };
+    }
+  }
 
-    const s = steps[step];
-
-    const card = document.createElement('div');
-    card.className = 'step-card';
-    cardRefs.push(card);
-
-    const hdr = document.createElement('div');
-    hdr.className = 'step-header';
-    hdr.innerHTML = `
-    <span class="step-num">${s.num}</span>
-    <span class="step-title">${s.title}</span>`;
-    card.appendChild(hdr);
-
-    const body = document.createElement('div');
-    card.appendChild(body);
-    s.render(body);
-
-    document.getElementById('root').appendChild(card);
-
-    const pct = ((step + 1) / steps.length) * 100;
-    document.getElementById('progress').style.width = pct + '%';
-
-    updateSpeaker(step);
-    step++;
-    updateFocusMode();
-
-    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function validateInputs() {
+    state.validationError = '';
+    if (!(state.N > 2 && state.N % 2 === 1 && isComposite(state.N))) {
+      state.validationError = 'N must be odd, composite, and greater than 2.';
+      return false;
+    }
+    if (!(state.epsilon >= 0.01 && state.epsilon <= 0.5)) {
+      state.validationError = 'ε must be between 0.01 and 0.5.';
+      return false;
+    }
+    if (!(state.x > 1 && state.x < state.N && gcd(state.x, state.N) === 1)) {
+      state.validationError = `x must satisfy 1 < x < N and gcd(x, N) = 1.`;
+      return false;
+    }
     return true;
   }
 
-  function manualNext() {
-    if (step < steps.length) {
-      nextStep();
-      if (autoPlay) startTimer();
+  function buildNarration(reason) {
+    if (state.validationError) return state.validationError;
+    const lines = [];
+    if (previousSnapshot.N !== state.N) {
+      lines.push(`Because N changed from ${previousSnapshot.N} to ${state.N}, L moved to ${state.L} and K moved to ${state.K}.`);
     }
-  }
-
-  function goBack() {
-    // Restart from beginning up to step-1
-    if (step <= 1) return;
-    step = 0;
-    cardRefs.length = 0;
-    document.getElementById('root').innerHTML = '';
-    const target = Math.max(0, cardRefs.length);
-    // rebuild up to previous step count minus 1
-    const prevCount = parseInt(goBack._prev || 1) - 1;
-    goBack._prev = step;
-
-    // Simple: just remove last card
-    const cards = document.getElementById('root').children;
-    // Re-render by removing last child
-    const root = document.getElementById('root');
-    if (root.lastChild) {
-      root.removeChild(root.lastChild);
-      cardRefs.pop();
-      step--;
-      if (step < 0) step = 0;
-      updateFocusMode();
-      if (step > 0) updateSpeaker(step - 1);
-      const pct = (step / steps.length) * 100;
-      document.getElementById('progress').style.width = pct + '%';
+    if (Math.abs(previousSnapshot.epsilon - state.epsilon) > 1e-9) {
+      lines.push(`Changing ε to ${state.epsilon.toFixed(2)} adjusts required precision, so K and M update automatically.`);
     }
-  }
-
-  // Simpler back: rebuild
-  function goBack() {
-    if (step <= 1) return;
-    const targetStep = step - 1;
-    step = 0;
-    cardRefs.length = 0;
-    document.getElementById('root').innerHTML = '';
-    for (let i = 0; i < targetStep; i++) nextStep();
-    stopTimer();
-    if (autoPlay) startTimer();
-  }
-
-  function toggleAuto() {
-    autoPlay = !autoPlay;
-    const btn = document.getElementById('btnAuto');
-    if (autoPlay) {
-      btn.textContent = '⏸ Pause';
-      btn.classList.add('active');
-      startTimer();
-    } else {
-      btn.textContent = '▶ Auto';
-      btn.classList.remove('active');
-      stopTimer();
+    if (previousSnapshot.x !== state.x) {
+      lines.push(`With x=${state.x}, modular exponentiation repeats every r=${state.period ?? 'unknown'} and drives the QFT peaks.`);
     }
+    if (!lines.length) lines.push(reason || 'Simulation updated. Watch periodicity become frequency peaks.');
+
+    if (state.classroomMode) {
+      const guided = [
+        'Section 1: we size the registers.',
+        'Section 2: equal superposition over control states.',
+        'Section 3: repeated outputs reveal period groups.',
+        'Section 4: QFT turns period into sharp frequencies.',
+        'Section 5: measurement collapses to a peak k.',
+        'Section 6: continued fractions test candidate denominators.',
+        'Section 7: recovered r yields factors via gcd.'
+      ];
+      lines.push(guided[state.currentSection]);
+    }
+
+    return lines.join(' ');
   }
 
-  function startTimer() {
-    stopTimer();
-    if (step >= steps.length) return;
-    const fill = document.getElementById('timerFill');
-    fill.style.transition = 'none';
-    fill.style.transform = 'scaleX(1)';
-    fill.classList.add('running');
+  function renderRegisterMath() {
+    elements.formulaBlock.textContent =
+`L = ceil(log2(N)) = ceil(log2(${state.N})) = ${state.L}
+K = 2L + 1 + ceil(log2(2 + 1/(2ε))) = 2·${state.L} + 1 + ceil(log2(2 + 1/(2·${state.epsilon.toFixed(2)}))) = ${state.K}
+M = 2^K = 2^${state.K} = ${state.M.toLocaleString()}`;
 
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        fill.style.transition = `transform ${speedSec}s linear`;
-        fill.style.transform = 'scaleX(0)';
-      });
+    const values = [
+      ['N', state.N],
+      ['ε', state.epsilon.toFixed(2)],
+      ['L (target qubits)', state.L],
+      ['K (control qubits)', state.K],
+      ['M (control states)', state.M.toLocaleString()],
+      ['x', state.x],
+      ['Detected r', state.period ?? '—']
+    ];
+
+    elements.statGrid.innerHTML = values
+      .map(([k, v]) => `<div class="stat"><div>${k}</div><div>${v}</div></div>`)
+      .join('');
+  }
+
+  function renderSuperposition() {
+    const canvas = elements.superpositionCanvas;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(280 * dpr);
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = 280;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#0b5fff';
+
+    let bars = 128;
+    if (state.superpositionMode === 'all') bars = Math.min(state.M, 1024);
+    if (state.superpositionMode === 'hist') bars = 48;
+
+    const gap = 2;
+    const bw = Math.max(1, (w - (bars + 1) * gap) / bars);
+
+    for (let i = 0; i < bars; i++) {
+      const x = gap + i * (bw + gap);
+      let value = 1;
+      if (state.superpositionMode === 'hist') {
+        value = Math.max(0.2, Math.abs(Math.sin((i / bars) * Math.PI * 2)));
+      }
+      const bh = value * (h - 50);
+      ctx.fillRect(x, h - bh - 20, bw, bh);
+    }
+
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 22px sans-serif';
+    const desc = state.superpositionMode === 'all'
+      ? `Showing up to ${bars.toLocaleString()} explicit basis bars out of M=${state.M.toLocaleString()}`
+      : state.superpositionMode === 'sample'
+        ? `Showing ${bars} representative samples from ${state.M.toLocaleString()} states`
+        : `Histogram view of ${state.M.toLocaleString()} states grouped into ${bars} bins`;
+    ctx.fillText(desc, 10, 28);
+
+    elements.superpositionInfo.textContent =
+      `Uniform amplitudes after Hadamard. Total control basis states: ${state.M.toLocaleString()}.`;
+
+    updateModeButtons();
+  }
+
+  function renderPeriodGroups() {
+    const sample = state.sequence.slice(0, Math.min(24, state.sequence.length));
+    elements.modInfo.textContent =
+      `f(j)=x^j mod N with x=${state.x}, N=${state.N}. Sequence repeats with period r=${state.period ?? 'unknown'}.`;
+    elements.sequenceFormula.textContent = `Sample sequence: ${sample.join(' → ')}${state.sequence.length > sample.length ? ' → ...' : ''}`;
+  }
+
+  function drawPeriodFrame(timeMs) {
+    const canvas = elements.periodCanvas;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(320 * dpr);
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = 320;
+    ctx.clearRect(0, 0, w, h);
+
+    const points = Math.min(state.sequence.length, 180);
+    if (!points || !state.periodGroups.length) return;
+
+    const progress = (Math.sin(timeMs / 900) + 1) / 2;
+    const valueToGroup = new Map(state.periodGroups.map((g, idx) => [g.value, idx]));
+
+    for (let j = 0; j < points; j++) {
+      const value = state.sequence[j];
+      const g = valueToGroup.get(value) || 0;
+      const groupCount = state.periodGroups.length;
+      const x0 = 40 + (j / Math.max(1, points - 1)) * (w - 80);
+      const y0 = 70 + Math.sin(j * 0.25 + timeMs / 700) * 8;
+      const x1 = 50 + (g / Math.max(1, groupCount - 1 || 1)) * (w - 100);
+      const y1 = 120 + ((j / groupCount) % 12) * 14;
+      const x = x0 * (1 - progress) + x1 * progress;
+      const y = y0 * (1 - progress) + y1 * progress;
+
+      const color = state.periodGroups[g]?.color || '#0b5fff';
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillText('Animated grouping: states with same f(j) move together', 14, 28);
+
+    ctx.font = 'bold 20px sans-serif';
+    state.periodGroups.slice(0, 8).forEach((group, idx) => {
+      ctx.fillStyle = group.color;
+      ctx.fillRect(14, 40 + idx * 30, 20, 20);
+      ctx.fillStyle = '#111827';
+      const sampleJs = group.js.slice(0, 3).join(', ');
+      ctx.fillText(`f(j)=${group.value}, j in {${sampleJs}${group.js.length > 3 ? ', ...' : ''}}`, 40, 58 + idx * 30);
+    });
+  }
+
+  function renderQFT() {
+    elements.qftInfo.textContent = state.period
+      ? `QFT peaks expected near multiples of M/r = ${(state.M / state.period).toFixed(2)}. Candidate k values: ${state.qftPeaks.join(', ')}.`
+      : 'No period found yet, so peaks are not available.';
+  }
+
+  function drawQFTFrame(timeMs) {
+    const canvas = elements.qftCanvas;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(340 * dpr);
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = 340;
+    ctx.clearRect(0, 0, w, h);
+
+    const bins = 80;
+    const period = state.period || 1;
+    const samples = Math.min(state.sequence.length, 240);
+    const amplitudes = [];
+
+    for (let f = 0; f < bins; f++) {
+      let re = 0, im = 0;
+      for (let j = 0; j < samples; j++) {
+        const subgroup = j % period;
+        const phase = (2 * Math.PI * f * j) / bins + subgroup * 0.15 + timeMs * 0.0008;
+        re += Math.cos(phase);
+        im += Math.sin(phase);
+      }
+      amplitudes.push(Math.sqrt(re * re + im * im));
+    }
+
+    const maxA = Math.max(...amplitudes, 1);
+    const baseY = h - 40;
+    const bw = (w - 20) / bins;
+
+    const collapseProgress = state.measuredK == null ? 0 : Math.min(1, (performance.now() - state.measureAnimStart) / 1000);
+
+    for (let f = 0; f < bins; f++) {
+      const kApprox = Math.round((f / bins) * state.M);
+      const isPeak = state.qftPeaks.some((p) => Math.abs(p - kApprox) <= Math.max(3, state.M / bins));
+      const isMeasured = state.measuredK != null && Math.abs(state.measuredK - kApprox) <= Math.max(3, state.M / bins);
+
+      let val = amplitudes[f] / maxA;
+      if (state.measuredK != null) {
+        if (isMeasured) val = val * (1 + 0.6 * collapseProgress);
+        else val = val * (1 - 0.85 * collapseProgress);
+      }
+
+      const bh = Math.max(2, val * 150);
+      ctx.fillStyle = isMeasured ? '#b91c1c' : isPeak ? '#0a8f44' : '#7b93bf';
+      ctx.fillRect(10 + f * bw, baseY - bh, Math.max(1, bw - 1), bh);
+    }
+
+    const centerX = 130;
+    const centerY = 95;
+    const radius = 48;
+    ctx.strokeStyle = '#adbfe1';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    let totalRe = 0;
+    let totalIm = 0;
+    for (let g = 0; g < Math.min(state.periodGroups.length, 10); g++) {
+      const ang = (timeMs * 0.0012) + (2 * Math.PI * g) / Math.max(1, state.periodGroups.length);
+      const vx = Math.cos(ang);
+      const vy = Math.sin(ang);
+      totalRe += vx;
+      totalIm += vy;
+      ctx.strokeStyle = state.periodGroups[g].color;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + vx * radius, centerY + vy * radius);
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(centerX + totalRe * 12, centerY + totalIm * 12);
+    ctx.stroke();
+
+    ctx.fillStyle = '#111827';
+    ctx.font = 'bold 23px sans-serif';
+    ctx.fillText('Rotating subgroup phases (top) + interference spectrum (bottom)', 14, 28);
+  }
+
+  function animateMeasurement() {
+    if (!state.qftPeaks.length) return;
+    const valid = state.qftPeaks.filter((k) => k > 0) || state.qftPeaks;
+    const pool = valid.length ? valid : state.qftPeaks;
+    state.measuredK = pool[Math.floor(Math.random() * pool.length)];
+    state.measureAnimStart = performance.now();
+    state.cfAnimStart = performance.now();
+    recoverPeriodFromMeasurement();
+    factorFromPeriod();
+    renderMeasurement();
+    renderContinuedFractions();
+    renderFactorExtraction();
+    elements.narrationPanel.textContent = `Measurement collapsed to k=${state.measuredK}. Now we estimate φ=k/M and recover the period.`;
+  }
+
+  function renderMeasurement() {
+    if (state.measuredK == null) {
+      elements.measurementInfo.textContent = 'Press "Measure Register" to sample one of the QFT peaks probabilistically.';
+      elements.measurementFormula.textContent = 'k = ?';
+      return;
+    }
+    elements.measurementInfo.textContent = 'A single run samples one frequency peak, weighted by interference strength.';
+    elements.measurementFormula.textContent =
+      `Measured k = ${state.measuredK}\nφ = k / M = ${state.measuredK} / ${state.M} = ${state.phi.toFixed(6)}`;
+  }
+
+  function renderContinuedFractions() {
+    elements.cfTable.innerHTML = '';
+    if (state.measuredK == null) {
+      elements.cfInfo.textContent = 'Awaiting measurement result to start continued-fraction recovery.';
+      return;
+    }
+
+    const phi = state.phi;
+    const cf = continuedFraction(phi, 8);
+    const conv = convergents(cf);
+    const candidates = [];
+
+    conv.forEach((c) => {
+      if (c.den > 1 && c.den <= state.N * 2) candidates.push(c.den);
     });
 
-    autoTimer = setTimeout(() => {
-      const advanced = nextStep();
-      if (advanced && autoPlay && step < steps.length) {
-        startTimer();
-      } else if (!advanced || step >= steps.length) {
-        autoPlay = false;
-        document.getElementById('btnAuto').textContent = '▶ Auto';
-        document.getElementById('btnAuto').classList.remove('active');
-        stopTimer();
+    for (let r = 2; r <= Math.min(state.N, 18); r++) {
+      if (!candidates.includes(r)) candidates.push(r);
+    }
+
+    const uniqueCandidates = [...new Set(candidates)].slice(0, 10);
+    const elapsed = (performance.now() - state.cfAnimStart) / 800;
+    const shown = Math.max(1, Math.floor(elapsed));
+
+    uniqueCandidates.forEach((r, idx) => {
+      if (idx >= shown) return;
+      const test = powMod(state.x, r, state.N);
+      const ok = test === 1;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>r = ${r}</td>
+        <td>${state.x}^${r} mod ${state.N} = ${test}</td>
+        <td class="${ok ? 'success' : 'warn'}">${ok ? 'SUCCESS' : 'trying...'}</td>
+      `;
+      elements.cfTable.appendChild(tr);
+    });
+
+    elements.cfInfo.textContent =
+      `φ=${phi.toFixed(6)}. Continued-fraction convergents are tested until x^r mod N = 1. Recovered r=${state.recoveredR ?? 'pending'}.`;
+  }
+
+  function renderFactorExtraction() {
+    if (!state.recoveredR) {
+      elements.factorFormula.textContent = 'Need a valid period r from the continued-fraction stage.';
+      elements.factorResult.textContent = '';
+      return;
+    }
+
+    const f = state.factorization;
+    elements.factorFormula.textContent =
+`r = ${state.recoveredR}
+x^(r/2) = ${state.x}^(${state.recoveredR}/2) = ${Math.round(f?.xr2 ?? 0)}
+x^(r/2)-1 = ${Math.round((f?.xr2 ?? 0) - 1)},   x^(r/2)+1 = ${Math.round((f?.xr2 ?? 0) + 1)}
+p = gcd(x^(r/2)-1, N) = gcd(${Math.round((f?.xr2 ?? 0) - 1)}, ${state.N}) = ${f?.p ?? '?'}
+q = gcd(x^(r/2)+1, N) = gcd(${Math.round((f?.xr2 ?? 0) + 1)}, ${state.N}) = ${f?.q ?? '?'}`;
+
+    if (f?.success) {
+      elements.factorResult.innerHTML = `<span class="success">Final reveal: ${state.N} = ${f.p} × ${f.q}</span>`;
+    } else {
+      elements.factorResult.innerHTML = `<span class="warn">This run did not produce non-trivial factors. Try another measurement or x.</span>`;
+    }
+  }
+
+  function renderClassroomMode() {
+    elements.sections.forEach((section, index) => {
+      section.classList.remove('hidden-step', 'dimmed', 'active-step');
+      if (!state.classroomMode) return;
+      if (index > state.currentSection) section.classList.add('hidden-step');
+      if (index < state.currentSection) section.classList.add('dimmed');
+      if (index === state.currentSection) section.classList.add('active-step');
+    });
+    elements.stepStatus.textContent = `Section ${state.currentSection + 1} / ${elements.sections.length}`;
+  }
+
+  function updateModeButtons() {
+    elements.modeAll.classList.toggle('toggled', state.superpositionMode === 'all');
+    elements.modeSample.classList.toggle('toggled', state.superpositionMode === 'sample');
+    elements.modeHistogram.classList.toggle('toggled', state.superpositionMode === 'hist');
+  }
+
+  function recomputeSimulation(reason = 'manual recompute') {
+    if (!validateInputs()) {
+      elements.validationMessage.textContent = state.validationError;
+      elements.narrationPanel.textContent = state.validationError;
+      return;
+    }
+
+    elements.validationMessage.textContent = '';
+
+    computeRegisters();
+    computePeriod();
+    computeQFTPeaks();
+
+    state.measuredK = null;
+    state.phi = null;
+    state.recoveredR = null;
+    state.factorization = null;
+
+    renderRegisterMath();
+    renderSuperposition();
+    renderPeriodGroups();
+    renderQFT();
+    renderMeasurement();
+    renderContinuedFractions();
+    renderFactorExtraction();
+    renderClassroomMode();
+
+    elements.narrationPanel.textContent = buildNarration(reason);
+
+    previousSnapshot.N = state.N;
+    previousSnapshot.epsilon = state.epsilon;
+    previousSnapshot.x = state.x;
+  }
+
+  function updateFromControls(reason) {
+    state.N = Math.max(3, parseInt(elements.nInput.value || '15', 10));
+    state.epsilon = parseFloat(elements.epsilonInput.value || '0.25');
+    state.x = parseInt(elements.xInput.value || '2', 10);
+    elements.epsilonValue.textContent = state.epsilon.toFixed(2);
+    recomputeSimulation(reason);
+  }
+
+  function nextSection() {
+    state.currentSection = Math.min(elements.sections.length - 1, state.currentSection + 1);
+    renderClassroomMode();
+    if (state.classroomMode) {
+      elements.sections[state.currentSection].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      elements.narrationPanel.textContent = buildNarration('step forward');
+    }
+  }
+
+  function prevSection() {
+    state.currentSection = Math.max(0, state.currentSection - 1);
+    renderClassroomMode();
+    if (state.classroomMode) {
+      elements.sections[state.currentSection].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      elements.narrationPanel.textContent = buildNarration('step back');
+    }
+  }
+
+  function autoplayDelayMs() {
+    if (state.speed === 'slow') return 2800;
+    if (state.speed === 'fast') return 900;
+    return 1700;
+  }
+
+  function stopAutoplay() {
+    if (autoplayTimer) {
+      clearInterval(autoplayTimer);
+      autoplayTimer = null;
+    }
+    state.autoplay = false;
+    elements.autoplayBtn.textContent = 'Auto Play: Off';
+    elements.autoplayBtn.classList.remove('toggled');
+  }
+
+  function startAutoplay() {
+    stopAutoplay();
+    state.autoplay = true;
+    elements.autoplayBtn.textContent = 'Auto Play: On';
+    elements.autoplayBtn.classList.add('toggled');
+    autoplayTimer = setInterval(() => {
+      if (state.currentSection >= elements.sections.length - 1) {
+        stopAutoplay();
+        return;
       }
-    }, speedSec * 1000);
+      nextSection();
+    }, autoplayDelayMs());
   }
 
-  function stopTimer() {
-    if (autoTimer) { clearTimeout(autoTimer); autoTimer = null; }
-    const fill = document.getElementById('timerFill');
-    fill.classList.remove('running');
-    fill.style.transition = 'none';
-    fill.style.transform = 'scaleX(1)';
+  function toggleAutoplay() {
+    if (state.autoplay) stopAutoplay();
+    else startAutoplay();
   }
 
-  function setSpeed(s) {
-    speedSec = s;
-    document.querySelectorAll('[id^="spd"]').forEach(b => b.classList.remove('active'));
-    document.getElementById('spd' + s).classList.add('active');
-    if (autoPlay) startTimer();
+  function toggleClassroomMode() {
+    state.classroomMode = !state.classroomMode;
+    elements.classroomBtn.textContent = `Classroom Mode: ${state.classroomMode ? 'On' : 'Off'}`;
+    elements.classroomBtn.classList.toggle('toggled', state.classroomMode);
+    if (state.classroomMode) {
+      state.currentSection = Math.max(0, Math.min(state.currentSection, elements.sections.length - 1));
+      elements.sections[state.currentSection].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    renderClassroomMode();
+    elements.narrationPanel.textContent = buildNarration('classroom mode toggle');
   }
 
-  // Start with first step
-  nextStep();
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  }
+
+  function animationLoop(timeMs) {
+    drawPeriodFrame(timeMs);
+    drawQFTFrame(timeMs);
+    if (state.measuredK != null) {
+      renderContinuedFractions();
+    }
+    animationFrame = requestAnimationFrame(animationLoop);
+  }
+
+  function bindEvents() {
+    elements.nInput.addEventListener('input', () => updateFromControls('N changed'));
+    elements.epsilonInput.addEventListener('input', () => updateFromControls('epsilon changed'));
+    elements.xInput.addEventListener('input', () => updateFromControls('x changed'));
+
+    elements.recomputeBtn.addEventListener('click', () => updateFromControls('manual recompute'));
+
+    elements.randomXBtn.addEventListener('click', () => {
+      const n = parseInt(elements.nInput.value || '15', 10);
+      const x = chooseRandomCoprime(n);
+      if (x == null) {
+        state.validationError = 'No valid coprime x found for this N.';
+        elements.validationMessage.textContent = state.validationError;
+        return;
+      }
+      elements.xInput.value = String(x);
+      updateFromControls('random coprime x generated');
+    });
+
+    elements.resetBtn.addEventListener('click', () => {
+      stopAutoplay();
+      Object.assign(state, { ...defaultState });
+      const x = chooseRandomCoprime(state.N) || 2;
+      state.x = x;
+      elements.nInput.value = String(state.N);
+      elements.epsilonInput.value = String(state.epsilon);
+      elements.epsilonValue.textContent = state.epsilon.toFixed(2);
+      elements.xInput.value = String(state.x);
+      elements.speedSelect.value = state.speed;
+      elements.classroomBtn.textContent = 'Classroom Mode: Off';
+      elements.classroomBtn.classList.remove('toggled');
+      updateModeButtons();
+      recomputeSimulation('reset to defaults');
+    });
+
+    elements.modeAll.addEventListener('click', () => { state.superpositionMode = 'all'; renderSuperposition(); });
+    elements.modeSample.addEventListener('click', () => { state.superpositionMode = 'sample'; renderSuperposition(); });
+    elements.modeHistogram.addEventListener('click', () => { state.superpositionMode = 'hist'; renderSuperposition(); });
+
+    elements.measureBtn.addEventListener('click', animateMeasurement);
+
+    elements.prevStepBtn.addEventListener('click', prevSection);
+    elements.nextStepBtn.addEventListener('click', nextSection);
+    elements.classroomBtn.addEventListener('click', toggleClassroomMode);
+    elements.autoplayBtn.addEventListener('click', toggleAutoplay);
+
+    elements.speedSelect.addEventListener('change', (e) => {
+      state.speed = e.target.value;
+      if (state.autoplay) startAutoplay();
+    });
+
+    elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+    window.addEventListener('resize', () => {
+      renderSuperposition();
+      renderQFT();
+      renderPeriodGroups();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      if (key === ' ' || key === 'arrowright') {
+        e.preventDefault();
+        nextSection();
+      } else if (key === 'arrowleft') {
+        e.preventDefault();
+        prevSection();
+      } else if (key === 'a') {
+        e.preventDefault();
+        toggleAutoplay();
+      } else if (key === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+  }
+
+  function init() {
+    const initialX = chooseRandomCoprime(state.N) || 2;
+    state.x = initialX;
+    elements.xInput.value = String(initialX);
+    bindEvents();
+    recomputeSimulation('initial load');
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    animationFrame = requestAnimationFrame(animationLoop);
+  }
+
+  init();
 </script>
 </body>
 </html>
